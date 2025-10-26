@@ -1,9 +1,9 @@
 ---
-name: vault-tools
-description: Use when user wants context from their Obsidian vault - provides tools to search notes, traverse links, and explore vault structure
+name: obsidian-prep
+description: Prep for meetings, projects, and work sessions by gathering context from your Obsidian vault
 ---
 
-# Obsidian Vault Tools
+# Obsidian Prep
 
 ## When to Use This Skill
 
