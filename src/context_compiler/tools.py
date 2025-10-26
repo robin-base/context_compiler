@@ -77,9 +77,7 @@ def search_notes(query: str, vault_path: str = ".") -> list[dict] | dict:
         return {"error": f"Search failed: {str(e)}"}
 
 
-def get_linked_notes(
-    note_path: str, depth: int = 2, vault_path: str = "."
-) -> list[dict] | dict:
+def get_linked_notes(note_path: str, depth: int = 2, vault_path: str = ".") -> list[dict] | dict:
     """
     Get notes connected via wikilinks and backlinks.
 
@@ -131,6 +129,60 @@ def get_linked_notes(
 
     except Exception as e:
         return {"error": f"Link traversal failed: {str(e)}"}
+
+
+def list_notes(
+    vault_path: str = ".", tag: str | None = None, modified_after: str | None = None
+) -> list[dict] | dict:
+    """
+    List all notes in vault with optional filters.
+
+    Args:
+        vault_path: Path to Obsidian vault (default: current directory)
+        tag: Optional - only return notes with this tag
+        modified_after: Optional - ISO timestamp, only notes modified after this
+
+    Returns:
+        List of dicts with same structure as search_notes
+        Or error dict: {"error": "message"}
+    """
+    vault_path = Path(vault_path)
+
+    # Validate vault
+    if not vault_path.exists():
+        return {"error": f"Vault not found at {vault_path}"}
+
+    if not (vault_path / ".obsidian").exists():
+        return {"error": "Not an Obsidian vault (missing .obsidian/)"}
+
+    try:
+        # Initialize services
+        vault = VaultService(vault_path)
+
+        # Get all notes
+        notes = vault.get_all_notes()
+
+        # Filter by tag if provided
+        if tag:
+            notes = [n for n in notes if tag in extract_all_tags(n)]
+
+        # Filter by modified_after if provided
+        if modified_after:
+            try:
+                cutoff = datetime.fromisoformat(modified_after)
+                notes = [
+                    n for n in notes if datetime.fromtimestamp(n.path.stat().st_mtime) > cutoff
+                ]
+            except (ValueError, OSError) as e:
+                return {"error": f"Invalid modified_after timestamp: {str(e)}"}
+
+        # Convert to dicts
+        results = [_note_to_dict(note, match_type="list") for note in notes]
+
+        return results
+
+    except Exception as e:
+        return {"error": f"List operation failed: {str(e)}"}
 
 
 def _note_to_dict(note, match_type: str = "unknown") -> dict:
