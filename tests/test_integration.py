@@ -1,8 +1,6 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from context_compiler.compiler import ContextCompiler
 
 
@@ -24,8 +22,14 @@ def test_compile_context_end_to_end():
     mock_categorization = "1. VERY_RELEVANT - Recent meeting note"
     mock_summary = "You have a recent meeting with Sarah."
 
-    with patch('context_compiler.ranking.RankingService._call_llm', return_value=mock_categorization):
-        with patch('context_compiler.brief.BriefGenerator._generate_summary', return_value=mock_summary):
+    with patch(
+        "context_compiler.ranking.RankingService._call_llm",
+        return_value=mock_categorization,
+    ):
+        with patch(
+            "context_compiler.brief.BriefGenerator._generate_summary",
+            return_value=mock_summary,
+        ):
             brief = compiler.compile_context("meeting with Sarah")
 
     # Should generate complete brief
