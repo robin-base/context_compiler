@@ -40,7 +40,7 @@ Three-layer service architecture:
 2. **RankingService** - Categorizes with LLM (VERY/POTENTIALLY/NOT relevant)
 3. **BriefGenerator** - Creates formatted markdown output
 
-See [design document](../docs/plans/2025-10-26-context-compiler-design.md) for details.
+See [design document](docs/plans/2025-10-26-context-compiler-mvp.md) for details.
 
 ## Development
 
