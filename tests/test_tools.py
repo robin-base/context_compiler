@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from context_compiler.tools import get_linked_notes, list_notes, search_notes
+from context_compiler.tools import get_linked_notes, get_note_metadata, list_notes, search_notes
 
 
 def test_search_notes_by_title():
@@ -123,3 +123,43 @@ def test_list_notes_filter_by_both():
 
     # Should have person tags
     assert all("person" in r["tags"] for r in results)
+
+
+def test_get_note_metadata_basic():
+    """Test getting note metadata without full content."""
+    vault_path = Path("tests/fixtures/test_vault")
+    note_path = vault_path / "people" / "Sarah.md"
+
+    result = get_note_metadata(str(note_path), vault_path=str(vault_path))
+
+    assert "path" in result
+    assert "title" in result
+    assert result["title"] == "Sarah"
+    assert "tags" in result
+    assert "modified" in result
+    assert "frontmatter" in result
+    assert "link_count" in result
+    assert "snippet" in result
+    assert len(result["snippet"]) <= 200
+
+
+def test_get_note_metadata_with_frontmatter():
+    """Test metadata extraction includes frontmatter fields."""
+    vault_path = Path("tests/fixtures/test_vault")
+    note_path = vault_path / "people" / "Sarah.md"
+
+    result = get_note_metadata(str(note_path), vault_path=str(vault_path))
+
+    assert "frontmatter" in result
+    assert isinstance(result["frontmatter"], dict)
+    # Should have type: person from frontmatter
+    assert result["frontmatter"].get("type") == "person"
+
+
+def test_get_note_metadata_invalid_note():
+    """Test error handling for non-existent note."""
+    vault_path = Path("tests/fixtures/test_vault")
+
+    result = get_note_metadata("/nonexistent/note.md", vault_path=str(vault_path))
+
+    assert "error" in result

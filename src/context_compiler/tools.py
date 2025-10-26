@@ -185,6 +185,58 @@ def list_notes(
         return {"error": f"List operation failed: {str(e)}"}
 
 
+def get_note_metadata(note_path: str, vault_path: str = ".") -> dict:
+    """
+    Get note metadata without reading full content.
+
+    Args:
+        note_path: Path to note
+        vault_path: Path to Obsidian vault (default: current directory)
+
+    Returns:
+        Dict with:
+        - path, title, tags, modified (same as other functions)
+        - frontmatter: dict - all frontmatter fields
+        - link_count: int - number of outgoing links
+        - snippet: str - first 200 chars of content
+
+        Or error dict: {"error": "message"}
+    """
+    vault_path = Path(vault_path)
+    note_path = Path(note_path)
+
+    # Validate vault
+    if not vault_path.exists():
+        return {"error": f"Vault not found at {vault_path}"}
+
+    if not (vault_path / ".obsidian").exists():
+        return {"error": "Not an Obsidian vault (missing .obsidian/)"}
+
+    # Validate note exists
+    if not note_path.exists():
+        return {"error": f"Note not found: {note_path}"}
+
+    try:
+        # Initialize vault
+        vault = VaultService(vault_path)
+
+        # Load note
+        note = vault.load_note(note_path)
+
+        # Build metadata dict
+        result = _note_to_dict(note, match_type="metadata")
+
+        # Add additional fields
+        result["frontmatter"] = dict(note.frontmatter)
+        result["link_count"] = len(note.links)
+        result["snippet"] = note.content[:200].replace("\n", " ").strip()
+
+        return result
+
+    except Exception as e:
+        return {"error": f"Metadata extraction failed: {str(e)}"}
+
+
 def _note_to_dict(note, match_type: str = "unknown") -> dict:
     """Convert Note object to dict with metadata."""
     tags = extract_all_tags(note)
