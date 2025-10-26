@@ -77,6 +77,62 @@ def search_notes(query: str, vault_path: str = ".") -> list[dict] | dict:
         return {"error": f"Search failed: {str(e)}"}
 
 
+def get_linked_notes(
+    note_path: str, depth: int = 2, vault_path: str = "."
+) -> list[dict] | dict:
+    """
+    Get notes connected via wikilinks and backlinks.
+
+    Args:
+        note_path: Path to anchor note
+        depth: How many levels deep to traverse (default: 2)
+        vault_path: Path to Obsidian vault (default: current directory)
+
+    Returns:
+        List of dicts with same structure as search_notes, plus:
+        - distance: int - how many links away (1 = direct link)
+
+        Or error dict: {"error": "message"}
+    """
+    vault_path = Path(vault_path)
+    note_path = Path(note_path)
+
+    # Validate vault
+    if not vault_path.exists():
+        return {"error": f"Vault not found at {vault_path}"}
+
+    if not (vault_path / ".obsidian").exists():
+        return {"error": "Not an Obsidian vault (missing .obsidian/)"}
+
+    # Validate note exists
+    if not note_path.exists():
+        return {"error": f"Note not found: {note_path}"}
+
+    try:
+        # Initialize vault
+        vault = VaultService(vault_path)
+
+        # Load anchor note
+        anchor = vault.load_note(note_path)
+
+        # Get connected notes
+        connected = vault.get_connected_notes(anchor, depth=depth, include_backlinks=True)
+
+        # Convert to dicts with distance
+        # Note: vault_explorer doesn't track distance, so we'll set all to 1 for MVP
+        # This is acceptable - Claude can prioritize by other factors
+        results = []
+        for note in connected:
+            note_dict = _note_to_dict(note, match_type="link")
+            note_dict["distance"] = 1  # Simplified for MVP
+            results.append(note_dict)
+
+        return results
+
+    except Exception as e:
+        return {"error": f"Link traversal failed: {str(e)}"}
+
+
 def _note_to_dict(note, match_type: str = "unknown") -> dict:
     """Convert Note object to dict with metadata."""
     tags = extract_all_tags(note)

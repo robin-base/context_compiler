@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from context_compiler.tools import search_notes
+from context_compiler.tools import get_linked_notes, search_notes
 
 
 def test_search_notes_by_title():
@@ -42,3 +42,40 @@ def test_search_notes_invalid_vault():
     results = search_notes("test", "/nonexistent/path")
 
     assert "error" in results
+
+
+def test_get_linked_notes_basic():
+    """Test getting linked notes from anchor."""
+    vault_path = Path("tests/fixtures/test_vault")
+    note_path = vault_path / "projects" / "Project Phoenix.md"
+
+    results = get_linked_notes(str(note_path), depth=1, vault_path=str(vault_path))
+
+    assert len(results) > 0
+    # Should include Sarah (linked from Project Phoenix)
+    assert any(r["title"] == "Sarah" for r in results)
+    # Check structure
+    assert all("path" in r for r in results)
+    assert all("distance" in r for r in results)
+    assert all(r["distance"] >= 1 for r in results)
+
+
+def test_get_linked_notes_with_depth():
+    """Test depth parameter controls traversal."""
+    vault_path = Path("tests/fixtures/test_vault")
+    note_path = vault_path / "projects" / "Project Phoenix.md"
+
+    results_depth_1 = get_linked_notes(str(note_path), depth=1, vault_path=str(vault_path))
+    results_depth_2 = get_linked_notes(str(note_path), depth=2, vault_path=str(vault_path))
+
+    # Depth 2 should find same or more notes
+    assert len(results_depth_2) >= len(results_depth_1)
+
+
+def test_get_linked_notes_invalid_note():
+    """Test error handling for non-existent note."""
+    vault_path = Path("tests/fixtures/test_vault")
+
+    result = get_linked_notes("/nonexistent/note.md", vault_path=str(vault_path))
+
+    assert "error" in result
