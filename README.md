@@ -1,26 +1,23 @@
-# Context Compiler
+# Obsidian Vault Tools
 
-A Claude Code skill that prepares you for meetings, calls, and work sessions by scanning your Obsidian vault for relevant context.
+Claude Code skill providing tools to explore Obsidian vaults. Claude uses these tools to search notes, traverse links, and prep users for meetings/work sessions.
 
 ## Features
 
-- **Hybrid Search**: Keyword matching → graph traversal → LLM filtering
-- **Smart Briefs**: LLM-generated summaries with categorized sections
-- **Deep Links**: Click to open notes directly in Obsidian
-- **Fast**: Typical compilation in 3-10 seconds
+- **search_notes()** - Find notes by keyword in titles, content, tags
+- **get_linked_notes()** - Traverse wikilinks and backlinks with configurable depth
+- **list_notes()** - List all notes with tag/date filters
+- **get_note_metadata()** - Get metadata without reading full content
 
-## Usage
+## How It Works
 
-When using Claude Code, simply ask:
+When you say "Prep me for my meeting with Sarah", Claude:
+1. Calls `search_notes("sarah")` to find relevant notes
+2. Calls `get_linked_notes()` to expand context via links
+3. Uses Read tool to read the top priority notes
+4. Synthesizes and presents a prep brief
 
-```
-Prep me for my meeting with Sarah
-```
-
-Claude will automatically invoke this skill, scan your Obsidian vault, and provide a focused brief with:
-- Executive summary
-- Very relevant notes (recent conversations, action items)
-- Potentially relevant notes (background, context)
+**You orchestrate, tools provide data.**
 
 ## Installation
 
@@ -34,22 +31,24 @@ uv run pytest
 
 ## Architecture
 
-Three-layer service architecture:
+Simple stateless functions that wrap vault_explorer library:
+- Each function takes vault_path, returns metadata dicts
+- No shared state between calls
+- Claude orchestrates workflow via SKILL.md instructions
 
-1. **RelevanceEngine** - Finds notes via hybrid search
-2. **RankingService** - Categorizes with LLM (VERY/POTENTIALLY/NOT relevant)
-3. **BriefGenerator** - Creates formatted markdown output
-
-See [design document](docs/plans/2025-10-26-context-compiler-mvp.md) for details.
+See [design document](docs/plans/2025-10-26-vault-tools-design.md) for details.
 
 ## Development
 
-See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for contribution guidelines.
+See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for testing and contribution guidelines.
 
 ## Status
 
-✅ MVP Complete - Basic functionality working
-🚧 LLM Integration - TODO: Connect to actual LLM API
+✅ Tool Functions - Complete
+✅ Tests - Comprehensive coverage
+✅ Documentation - Complete
+
+Ready for use with Claude Code!
 
 ## License
 

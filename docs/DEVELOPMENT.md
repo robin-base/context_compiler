@@ -3,7 +3,6 @@
 ## Setup
 
 ```bash
-# Clone and install
 git clone <repo>
 cd context_compiler
 uv sync --dev
@@ -15,11 +14,8 @@ uv sync --dev
 # All tests
 uv run pytest
 
-# Specific test file
-uv run pytest tests/test_relevance.py -v
-
-# Single test
-uv run pytest tests/test_relevance.py::test_find_anchor_notes -v
+# Specific function tests
+uv run pytest tests/test_tools.py::test_search_notes -v
 
 # With coverage
 uv run pytest --cov=src/context_compiler
@@ -39,47 +35,52 @@ uv run ruff format src tests
 
 ```
 src/context_compiler/
-├── compiler.py       # Main orchestrator
-├── relevance.py      # RelevanceEngine (search + traversal)
-├── ranking.py        # RankingService (LLM categorization)
-├── brief.py          # BriefGenerator (formatting)
-├── models.py         # Data models
-└── skill.py          # Claude Code entry point
+└── tools.py          # 4 tool functions (~200 lines)
 
 tests/
-├── test_relevance.py
-├── test_ranking.py
-├── test_brief.py
-├── test_integration.py
+├── test_tools.py     # Unit tests for all functions
 └── fixtures/test_vault/  # Sample Obsidian vault
 ```
 
 ## Testing Strategy
 
-- **Unit tests**: Mock external dependencies (vault I/O, LLM calls)
-- **Integration tests**: Use test vault fixtures, mock LLM only
-- **Fixtures**: `tests/fixtures/test_vault/` contains sample notes
+- **Unit tests**: Each function tested with realistic vault fixtures
+- **Error handling**: Test invalid paths, missing notes, malformed vaults
+- **Filters**: Test tag and date filtering in list_notes()
 
-## TODO: LLM Integration
+## Tool Functions
 
-Currently, LLM calls are stubbed with `NotImplementedError`. To integrate:
+All functions are stateless - take vault_path, return data, no shared state.
 
-1. Choose LLM provider (Anthropic Claude, OpenAI, etc.)
-2. Implement `RankingService._call_llm()`
-3. Implement `BriefGenerator._generate_summary()`
-4. Add provider credentials/config
-5. Update tests to use real LLM (mark as slow/optional)
+### search_notes(query, vault_path)
+- Searches title, content, tags
+- Filters stopwords from query
+- Returns list of metadata dicts
+
+### get_linked_notes(note_path, depth, vault_path)
+- Traverses wikilinks and backlinks
+- Configurable depth (default: 2)
+- Returns metadata + distance
+
+### list_notes(vault_path, tag, modified_after)
+- Lists all notes
+- Optional tag filter
+- Optional date filter (ISO timestamp)
+
+### get_note_metadata(note_path, vault_path)
+- Gets metadata without full content
+- Includes frontmatter, link_count, snippet
+- Faster than Read tool for metadata-only needs
 
 ## Commit Conventions
 
-Follow vault_explorer conventions:
 - Describe change contents only
 - No "Generated with Claude Code" signatures
 - No Co-authored-by lines
 
 Example:
 ```
-Add graph traversal to RelevanceEngine
+Add search_notes() tool function
 
-Implement BFS traversal with cycle detection.
+Searches vault by title, content, and tags. Returns metadata dicts.
 ```
