@@ -2,16 +2,14 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Union
 
 from vault_explorer import SearchService, VaultService, extract_all_tags
-
 
 # Stopwords to filter from queries
 STOPWORDS = {"a", "an", "the", "with", "for", "on", "in", "at", "to", "of"}
 
 
-def search_notes(query: str, vault_path: str = ".") -> Union[list[dict], dict]:
+def search_notes(query: str, vault_path: str = ".") -> list[dict] | dict:
     """
     Find notes matching query in titles, content, and tags.
 
@@ -36,7 +34,7 @@ def search_notes(query: str, vault_path: str = ".") -> Union[list[dict], dict]:
         return {"error": f"Vault not found at {vault_path}"}
 
     if not (vault_path / ".obsidian").exists():
-        return {"error": f"Not an Obsidian vault (missing .obsidian/)"}
+        return {"error": "Not an Obsidian vault (missing .obsidian/)"}
 
     try:
         # Initialize services
