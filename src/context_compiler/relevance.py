@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 
 from vault_explorer import SearchService, VaultService, extract_all_tags
+from vault_explorer.models import Note
 
 from context_compiler.models import CandidateNote
 
@@ -25,7 +26,7 @@ class RelevanceEngine:
         self.vault.get_all_notes()
         self.search = SearchService(self.vault)
 
-    def _find_anchor_notes(self, query: str) -> list:
+    def _find_anchor_notes(self, query: str) -> list[Note]:
         """Find anchor notes via keyword search.
 
         Args:
@@ -99,15 +100,8 @@ class RelevanceEngine:
             if len(candidates) >= self.max_candidates:
                 break
 
-            # Load note if not in cache
-            note = None
-            for cached_note in self.vault._notes_cache.values():
-                if cached_note.path == note_path:
-                    note = cached_note
-                    break
-
-            if note is None:
-                note = self.vault.load_note(note_path)
+            # load_note already checks cache internally
+            note = self.vault.load_note(note_path)
 
             # Extract metadata
             tags = extract_all_tags(note)
@@ -118,8 +112,11 @@ class RelevanceEngine:
             if not snippet:
                 snippet = note.content[:200].replace("\n", " ").strip()
 
-            # Get modification time
-            mtime = datetime.fromtimestamp(note_path.stat().st_mtime)
+            # Get modification time with error handling
+            try:
+                mtime = datetime.fromtimestamp(note_path.stat().st_mtime)
+            except (FileNotFoundError, OSError):
+                mtime = datetime.now()
 
             candidate = CandidateNote(
                 title=note.title,
